@@ -5,12 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.provider.Settings;
 
-/** The standard settings intent, or, when nothing usable answers it - or when the standard SETTINGS
- *  action would open the AOSP TV settings on firmware that also ships a vendor settings app - the
- *  first vendor settings entry from settings_fallback_components that is installed (Xiaomi China,
- *  TCL / FFALCON, Fire OS). */
+/** The standard settings intent, or, when nothing usable answers it, the first vendor settings entry
+ *  from settings_fallback_components that is installed (Xiaomi China, TCL / FFALCON, Fire OS). */
 final class SystemSettings {
     private SystemSettings() {}
 
@@ -20,16 +17,7 @@ final class SystemSettings {
         ResolveInfo resolved = pm.resolveActivity(standard, PackageManager.MATCH_DEFAULT_ONLY);
         // Fire OS resolves the standard actions to a CTS compliance stub that opens nothing;
         // treat it as missing so the vendor fallback runs.
-        //
-        // China-market firmware (Xiaomi HyperOS on the MiTV-MTEQ0 is one) ships the AOSP TV
-        // settings next to the vendor's own, and the standard SETTINGS action resolves to the
-        // AOSP one - which has no Account & Security page, where the ADB switch lives on Xiaomi.
-        // For that one action with that one answer, the vendor entry is the better target.
-        boolean standardUsable = resolved != null && !resolved.activityInfo.name.contains("CTSDummy");
-        if (standardUsable && !(Settings.ACTION_SETTINGS.equals(action)
-                && "com.android.tv.settings".equals(resolved.activityInfo.packageName))) {
-            return standard;
-        }
+        if (resolved != null && !resolved.activityInfo.name.contains("CTSDummy")) return standard;
         Intent vendor = vendorIntent(context);
         return vendor != null ? vendor : standard;
     }
